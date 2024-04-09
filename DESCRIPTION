@@ -1,0 +1,18 @@
+Package: RVP
+Title: Recursive Variance Partitioning
+Version: 0.1.0
+Authors@R: 
+    person("Wei Xin", "Chan", NULL, "cweixin@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0003-3193-9195"))
+Description: RVP is a quantitative batch effect metric that estimates the
+    proportion of variance associated with batch effects in a data set.
+Imports: Matrix
+Suggests: SummarizedExperiment, SeuratObject
+License: MIT + file LICENSE
+Encoding: UTF-8
+RoxygenNote: 7.2.1
+Collate: 
+    'utils.R'
+    'RVP.R'
+    'plot.R'
+    'simulate.R'
