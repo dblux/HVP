@@ -6,13 +6,12 @@ Authors@R:
            comment = c(ORCID = "0000-0003-3193-9195"))
 Description: RVP is a quantitative batch effect metric that estimates the
     proportion of variance associated with batch effects in a data set.
-Imports: Matrix
-Suggests: SummarizedExperiment, SeuratObject
+Imports: Matrix, methods, progress, stats, utils
+Suggests: SingleCellExperiment, SummarizedExperiment, SeuratObject, testthat
 License: MIT + file LICENSE
 Encoding: UTF-8
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 Collate: 
     'utils.R'
     'RVP.R'
-    'plot.R'
     'simulate.R'
