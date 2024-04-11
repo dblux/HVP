@@ -36,6 +36,9 @@
 #'
 #' @author Wei Xin Chan
 #'
+#' @importFrom stats rbinom rgamma rnorm
+#' @importFrom utils capture.output
+#'
 #' @export
 #'
 simulate_microarray <- function(
@@ -155,7 +158,7 @@ simulate_microarray <- function(
 
 #' Sigmoid function
 #'
-#' @param numeric scalar/vector/matrix
+#' @param x numeric scalar/vector/matrix
 #' @param r inverse scale parameter of the sigmoid function
 #' @param s midpoint parameter of the sigmoid function
 #'

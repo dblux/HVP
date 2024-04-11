@@ -9,18 +9,24 @@
 \usage{
 RVP(x, ...)
 
-\method{RVP}{default}(X, batch, cls = NULL, nperm = 0, use.sparse = FALSE)
+\method{RVP}{default}(x, batch, cls = NULL, nperm = 0, use.sparse = FALSE, ...)
 
-\method{RVP}{Seurat}(seu, batchname, classname = NULL, slot = "data", ...)
+\method{RVP}{Seurat}(x, batchname, classname = NULL, nperm = 0, use.sparse = FALSE, ...)
 
-\method{RVP}{SummarizedExperiment}(se, batchname, classname = NULL, assayname = NULL, ...)
+\method{RVP}{SummarizedExperiment}(
+  x,
+  batchname,
+  classname = NULL,
+  assayname = NULL,
+  nperm = 0,
+  use.sparse = FALSE,
+  ...
+)
 }
 \arguments{
 \item{x}{object to calculate RVP for.}
 
-\item{...}{optional arguments to pass to `RVP.default`}
-
-\item{X}{data frame or matrix with dim (nfeatures, nsamples).}
+\item{...}{additional arguments to pass to S3 methods.}
 
 \item{batch}{vector, indicating the batch information of samples.}
 
@@ -34,16 +40,9 @@ By default, no permutation test is performed.}
  computing RVP. N.B. Using sparse matrices may lead to slight increase
 in run time.}
 
-\item{seu}{Seurat object.}
-
 \item{batchname}{character, name of column in metadata indicating batch.}
 
 \item{classname}{character, name of column/s in metadata indicating class.}
-
-\item{slot}{character, name of slot in assay to use. E.g. counts.}
-
-\item{se}{`SummarizedExperiment`/`SingleCellExperiment` object.
-`SingleExperiment` class inherits from the `SummarizedExperiment` class.}
 
 \item{assayname}{character, name of assay to use. By default the first
 assay is used.}
@@ -57,6 +56,7 @@ List containing the following components:
     \item{`p.value`}{p-value of permutation test}
     \item{`null.distribution`}{numeric, null distribution of RVP values.}
   }
+  Last two components are only present if permuation test is performed.
 }
 \description{
 `RVP` calculates the proportion of variance associated with batch effects
@@ -66,6 +66,14 @@ be performed by setting `nperm` to a number above 100. `RVP` is
 an S3 generic function; methods can be added for new classes. S3 methods
 for class: array-like objects (default), `SummarizedExperiment`, 
 `SingleCellExperiment` and `Seurat` are provided.
+}
+\details{
+Default S3 method is for class data frame or matrix with
+  dimensions (nfeatures, nsamples).
+
+S3 method for `SummarizedExperiment` is applicable for the
+  `SingleExperiment` class as well, as it inherits from the
+  `SummarizedExperiment` class.
 }
 \author{
 Wei Xin Chan

@@ -23,15 +23,16 @@ NULL
 #'     \item{`p.value`}{p-value of permutation test}
 #'     \item{`null.distribution`}{numeric, null distribution of RVP values.}
 #'   }
+#'   Last two components are only present if permuation test is performed.
 #'
 #' @author Wei Xin Chan
 #'
+#' @rdname RVP
 #' @export
 #'
 RVP <- function(x, ...) UseMethod("RVP", x)
 
 
-#' @param X data frame or matrix with dim (nfeatures, nsamples).
 #' @param batch vector, indicating the batch information of samples.
 #' @param cls vector or list of vectors with class information of samples.
 #' @param nperm numeric indicating number of permutations to simulate in the
@@ -41,17 +42,24 @@ RVP <- function(x, ...) UseMethod("RVP", x)
 #'   computing RVP. N.B. Using sparse matrices may lead to slight increase
 #'  in run time. 
 #'
+#' @details Default S3 method is for class data frame or matrix with
+#'   dimensions (nfeatures, nsamples).
+#'
+#' @importFrom progress progress_bar
+#' @importFrom utils capture.output
+#'
 #' @rdname RVP
 #' @export
 #'
 RVP.default <- function(
-  X, batch, cls = NULL,
-  nperm = 0, use.sparse = FALSE
+  x, batch, cls = NULL,
+  nperm = 0, use.sparse = FALSE,
+  ...
 ) {
   if (!use.sparse) {
-    obj <- .RVP(X, batch, cls)
+    res <- .RVP(x, batch, cls)
   } else {
-    obj <- .RVP_sparseMatrix(X, batch, cls)
+    res <- .RVP_sparseMatrix(x, batch, cls)
   }
 
   # Permutation test
@@ -60,7 +68,7 @@ RVP.default <- function(
     if (nperm < 100)
       stop("nperm has to be above 100!")
 
-    pb <- progress::progress_bar$new(
+    pb <- progress_bar$new(
       format = "Permutations: [:bar] :current/:total in :elapsed.",
       total = nperm, clear = FALSE, width = 75
     )
@@ -70,32 +78,29 @@ RVP.default <- function(
     for (i in seq_len(nperm)) {
       shuffled_batch <- sample(batch)
       if (!use.sparse) {
-        null_rvp <- .RVP(X, shuffled_batch, cls)$RVP
+        null_rvp <- .RVP(x, shuffled_batch, cls)$RVP
       } else {
-        null_rvp <- .RVP_sparseMatrix(X, shuffled_batch, cls)$RVP
+        null_rvp <- .RVP_sparseMatrix(x, shuffled_batch, cls)$RVP
       }
       null_distr <- c(null_distr, null_rvp)
       pb$tick()
     }
-    obj$p.value <- sum(null_distr > obj$RVP) / nperm
-    obj$null.distribution <- null_distr
+    res$p.value <- sum(null_distr > res$RVP) / nperm
+    res$null.distribution <- null_distr
   }
-  obj
+  res
 }
 
 
-#' @param seu Seurat object.
 #' @param batchname character, name of column in metadata indicating batch.
 #' @param classname character, name of column/s in metadata indicating class. 
-#' @param slot character, name of slot in assay to use. E.g. counts.
-#' @param ... optional arguments to pass to `RVP.default`
 #'
 #' @rdname RVP
 #' @export
 #'
 RVP.Seurat <- function(
-  seu, batchname, classname = NULL,
-  slot = "data",
+  x, batchname, classname = NULL,
+  nperm = 0, use.sparse = FALSE,
   ...
 ) {
   # Suggests: SeuratObject
@@ -103,51 +108,54 @@ RVP.Seurat <- function(
     stop("Please install SeuratObject package!")
 
   # GetAssayData is for Seurat assay v3/v4
-  X <- SeuratObject::GetAssayData(seu, slot = slot)
-  batch <- seu@meta.data[[batchname]]
+  assay_data <- SeuratObject::GetAssayData(x)
+  batch <- x@meta.data[[batchname]]
   cls <- if (is.null(classname) || is.na(classname)) {
     NULL
   } else if (length(classname) == 1L) {
-    # seu[[name]] returns dataframe instead of vector!
-    seu@meta.data[[classname]]
+    # x[[name]] returns dataframe instead of vector!
+    x@meta.data[[classname]]
   } else {
-    lapply(classname, function(name) seu@meta.data[[name]])
+    lapply(classname, function(name) x@meta.data[[name]])
   }
-  RVP.default(X, batch, cls, ...)
+  RVP.default(assay_data, batch, cls, nperm, use.sparse, ...)
 }
 
 
-#' @param se `SummarizedExperiment`/`SingleCellExperiment` object.
-#'   `SingleExperiment` class inherits from the `SummarizedExperiment` class. 
 #' @param assayname character, name of assay to use. By default the first
 #'   assay is used.
+#'
+#' @details S3 method for `SummarizedExperiment` is applicable for the
+#'   `SingleExperiment` class as well, as it inherits from the
+#'   `SummarizedExperiment` class.
 #'
 #' @rdname RVP
 #' @export
 #'
 RVP.SummarizedExperiment <- function(
-  se, batchname, classname = NULL,
+  x, batchname, classname = NULL,
   assayname = NULL,
+  nperm = 0, use.sparse = FALSE,
   ...
 ) {
   # Suggests: SummarizedExperiment 
   if (!requireNamespace("SummarizedExperiment", quietly = TRUE))
     stop("Please install SummarizedExperiment package!")
 
-  X <- if (is.null(assayname) || is.na(classname)) {
-    SummarizedExperiment::assay(se)
+  assay_data <- if (is.null(assayname) || is.na(assayname)) {
+    SummarizedExperiment::assay(x)
   } else {
-    SummarizedExperiment::assay(se, assayname)
+    SummarizedExperiment::assay(x, assayname)
   }
-  batch <- se[[batchname]]
+  batch <- x[[batchname]]
   cls <- if (is.null(classname) || is.na(classname)) {
     NULL
   } else if (length(classname) == 1L) {
-    se[[classname]]
+    x[[classname]]
   } else {
-    lapply(classname, function(name) se[[name]])
+    lapply(classname, function(name) x[[name]])
   }
-  RVP.default(X, batch, cls, ...)
+  RVP.default(assay_data, batch, cls, nperm, use.sparse, ...)
 }
 
 
@@ -237,6 +245,7 @@ RVP.SummarizedExperiment <- function(
 #' @param cls vector or list of vectors with class information of samples.
 #'
 #' @import Matrix
+#' @importFrom methods as
 #'
 #' @keywords internal
 #' @noRd

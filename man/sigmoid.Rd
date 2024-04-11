@@ -7,11 +7,11 @@
 sigmoid(x, r = 1, s = 0)
 }
 \arguments{
+\item{x}{numeric scalar/vector/matrix}
+
 \item{r}{inverse scale parameter of the sigmoid function}
 
 \item{s}{midpoint parameter of the sigmoid function}
-
-\item{numeric}{scalar/vector/matrix}
 }
 \value{
 A numeric scalar/vector/matrix of the same dimensions containing
