@@ -1,8 +1,4 @@
 set.seed(0)
-library(testthat)
-library(Matrix)
-library(SingleCellExperiment)
-library(SeuratObject)
 
 ########## SETUP ########## 
 
@@ -29,18 +25,14 @@ class2 <- rep(LETTERS[3:4], ncond * 2)
 class3 <- rep(LETTERS[3:4], each = ncond * 2)
 metadata <- data.frame(batch, class1, class2, row.names = colnames(dense))
 
-sce <- SingleCellExperiment(
+sce <- SingleCellExperiment::SingleCellExperiment(
   assays = list(logcounts = sparse),
   colData = metadata
 )
-seu <- CreateSeuratObject(
+seu <- SeuratObject::CreateSeuratObject(
   counts = sparse,
   meta.data = metadata
 )
-
-print(class(dense))
-print(class(sce))
-print(class(seu))
 
 ########## UNIT TESTS ##########
 
