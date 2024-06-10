@@ -2,35 +2,35 @@
 #'
 NULL
 
-#' Recursive variance partitioning (RVP)
+#' Hierarchical variance partitioning (HVP)
 #'
-#' `RVP` calculates the proportion of variance associated with batch effects
-#' in a data set (the "RVP" value of a data set). To determine whether batch
+#' `HVP` calculates the proportion of variance associated with batch effects
+#' in a data set (the "HVP" value of a data set). To determine whether batch
 #' effects are statistically significant in a data set, a permutation test can
-#' be performed by setting `nperm` to a number above 100. `RVP` is
+#' be performed by setting `nperm` to a number above 100. `HVP` is
 #' an S3 generic function; methods can be added for new classes. S3 methods
 #' for class: array-like objects (default), `SummarizedExperiment`, 
 #' `SingleCellExperiment` and `Seurat` are provided.
 #'
-#' @param x object to calculate RVP for.
+#' @param x object to calculate HVP for.
 #' @param ... additional arguments to pass to S3 methods.
 #'
 #' @returns List containing the following components:
 #'   \describe{
-#'     \item{`RVP`}{the proportion of variance associated with batch effects.}
+#'     \item{`HVP`}{the proportion of variance associated with batch effects.}
 #'     \item{`sum.squares`}{matrix of sum of squares between batch and total
 #'       sum of squares for all features.}
 #'     \item{`p.value`}{p-value of permutation test}
-#'     \item{`null.distribution`}{numeric, null distribution of RVP values.}
+#'     \item{`null.distribution`}{numeric, null distribution of HVP values.}
 #'   }
 #'   Last two components are only present if permuation test is performed.
 #'
 #' @author Wei Xin Chan
 #'
-#' @rdname RVP
+#' @rdname HVP
 #' @export
 #'
-RVP <- function(x, ...) UseMethod("RVP", x)
+HVP <- function(x, ...) UseMethod("HVP", x)
 
 
 #' @param batch vector, indicating the batch information of samples.
@@ -39,7 +39,7 @@ RVP <- function(x, ...) UseMethod("RVP", x)
 #'   Monte Carlo permutation test. We recommend a value no less than 1000.
 #'   By default, no permutation test is performed.
 #' @param use.sparse logical indicating whether to use sparse matrices when
-#'   computing RVP. N.B. Using sparse matrices may lead to slight increase
+#'   computing HVP. N.B. Using sparse matrices may lead to slight increase
 #'  in run time. 
 #'
 #' @details Default S3 method is for class data frame or matrix with
@@ -48,18 +48,18 @@ RVP <- function(x, ...) UseMethod("RVP", x)
 #' @importFrom progress progress_bar
 #' @importFrom utils capture.output
 #'
-#' @rdname RVP
+#' @rdname HVP
 #' @export
 #'
-RVP.default <- function(
+HVP.default <- function(
   x, batch, cls = NULL,
   nperm = 0, use.sparse = FALSE,
   ...
 ) {
   if (!use.sparse) {
-    res <- .RVP(x, batch, cls)
+    res <- .HVP(x, batch, cls)
   } else {
-    res <- .RVP_sparseMatrix(x, batch, cls)
+    res <- .HVP_sparseMatrix(x, batch, cls)
   }
 
   # Permutation test
@@ -78,14 +78,14 @@ RVP.default <- function(
     for (i in seq_len(nperm)) {
       shuffled_batch <- sample(batch)
       if (!use.sparse) {
-        null_rvp <- .RVP(x, shuffled_batch, cls)$RVP
+        null_rvp <- .HVP(x, shuffled_batch, cls)$HVP
       } else {
-        null_rvp <- .RVP_sparseMatrix(x, shuffled_batch, cls)$RVP
+        null_rvp <- .HVP_sparseMatrix(x, shuffled_batch, cls)$HVP
       }
       null_distr <- c(null_distr, null_rvp)
       pb$tick()
     }
-    res$p.value <- sum(null_distr > res$RVP) / nperm
+    res$p.value <- sum(null_distr > res$HVP) / nperm
     res$null.distribution <- null_distr
   }
   res
@@ -95,10 +95,10 @@ RVP.default <- function(
 #' @param batchname character, name of column in metadata indicating batch.
 #' @param classname character, name of column/s in metadata indicating class. 
 #'
-#' @rdname RVP
+#' @rdname HVP
 #' @export
 #'
-RVP.Seurat <- function(
+HVP.Seurat <- function(
   x, batchname, classname = NULL,
   nperm = 0, use.sparse = FALSE,
   ...
@@ -118,7 +118,7 @@ RVP.Seurat <- function(
   } else {
     lapply(classname, function(name) x@meta.data[[name]])
   }
-  RVP.default(assay_data, batch, cls, nperm, use.sparse, ...)
+  HVP.default(assay_data, batch, cls, nperm, use.sparse, ...)
 }
 
 
@@ -129,10 +129,10 @@ RVP.Seurat <- function(
 #'   `SingleExperiment` class as well, as it inherits from the
 #'   `SummarizedExperiment` class.
 #'
-#' @rdname RVP
+#' @rdname HVP
 #' @export
 #'
-RVP.SummarizedExperiment <- function(
+HVP.SummarizedExperiment <- function(
   x, batchname, classname = NULL,
   assayname = NULL,
   nperm = 0, use.sparse = FALSE,
@@ -155,11 +155,11 @@ RVP.SummarizedExperiment <- function(
   } else {
     lapply(classname, function(name) x[[name]])
   }
-  RVP.default(assay_data, batch, cls, nperm, use.sparse, ...)
+  HVP.default(assay_data, batch, cls, nperm, use.sparse, ...)
 }
 
 
-#' Helper function that calculates RVP
+#' Helper function that calculates HVP
 #'
 #' @param X data frame or matrix with dim (nfeatures, nsamples).
 #' @param batch vector, indicating the batch information of samples.
@@ -168,7 +168,7 @@ RVP.SummarizedExperiment <- function(
 #' @keywords internal
 #' @noRd
 #'
-.RVP <- function(X, batch, cls) {
+.HVP <- function(X, batch, cls) {
   ### CHECK ARGS ###
   if (ncol(X) != length(batch))
     stop("Length of batch does not match number of columns in X!")
@@ -176,11 +176,11 @@ RVP.SummarizedExperiment <- function(
   if (length(unique(batch)) == 1L) {
     # Use NA as is.na works on lists
     message("Only one batch present!")
-    return(list(RVP = 0, sum.squares = NA)) # only one batch is present
+    return(list(HVP = 0, sum.squares = NA)) # only one batch is present
   }
   X[is.na(X)] <- 0
 
-  ### COMPUTE RVP ###
+  ### COMPUTE HVP ###
   if (is.null(cls)) {
     feature_names <- rownames(X)
     feature_means <- rowMeans(X)
@@ -200,7 +200,7 @@ RVP.SummarizedExperiment <- function(
     rownames(SS) <- feature_names 
     colnames(SS) <- c("ss_batch", "ss_total")
 
-    return(list(RVP = pct_batch, sum.squares = SS))
+    return(list(HVP = pct_batch, sum.squares = SS))
   } else {
     feature_names <- rownames(X)
     ss_total <- rowSums((X - rowMeans(X)) ^ 2)
@@ -209,7 +209,7 @@ RVP.SummarizedExperiment <- function(
     # Warning: Recursive call
     SS_classes <- lapply(
       mapply(
-        .RVP, X_classes, batch_classes,
+        .HVP, X_classes, batch_classes,
         MoreArgs = list(cls = NULL),
         SIMPLIFY = FALSE
       ),
@@ -219,7 +219,7 @@ RVP.SummarizedExperiment <- function(
     SS_classes <- SS_classes[!is.na(SS_classes)]
     if (length(SS_classes) == 0L) {
       confound_message <- paste(
-        "RVP is unable to quantify batch effects as batch and class",
+        "HVP is unable to quantify batch effects as batch and class",
         "are completely confounded!"
       )
       stop(confound_message)
@@ -233,12 +233,12 @@ RVP.SummarizedExperiment <- function(
     rownames(SS) <- feature_names
     colnames(SS) <- c("ss_batch", "ss_total")
 
-    return(list(RVP = pct_batch, sum.squares = SS))
+    return(list(HVP = pct_batch, sum.squares = SS))
   }
 }
 
 
-#' Helper function that calculates RVP using sparse matrices
+#' Helper function that calculates HVP using sparse matrices
 #'
 #' @param X data frame or matrix with dim (nfeatures, nsamples).
 #' @param batch vector, indicating the batch information of samples.
@@ -250,7 +250,7 @@ RVP.SummarizedExperiment <- function(
 #' @keywords internal
 #' @noRd
 #'
-.RVP_sparseMatrix <- function(X, batch, cls = NULL) {
+.HVP_sparseMatrix <- function(X, batch, cls = NULL) {
   ### CHECK ARGS ###
   if (ncol(X) != length(batch))
     stop("Length of batch does not match number of columns in X!")
@@ -258,11 +258,11 @@ RVP.SummarizedExperiment <- function(
   if (length(unique(batch)) == 1L) {
     # Use NA as is.na works on lists
     message("Only one batch present!")
-    return(list(RVP = 0, sum.squares = NA)) # only one batch is present
+    return(list(HVP = 0, sum.squares = NA)) # only one batch is present
   }
   X[is.na(X)] <- 0
   
-  ### COMPUTE RVP ###
+  ### COMPUTE HVP ###
   if (is.null(cls)) {
     feature_names <- rownames(X)
     feature_means <- rowMeans(X, sparseResult = TRUE)
@@ -288,9 +288,9 @@ RVP.SummarizedExperiment <- function(
       dimnames = list(feature_names, c("ss_batch", "ss_total")),
       sparse = TRUE
     )
-    # print("RVP.sparseMatrix: vars")
+    # print("HVP.sparseMatrix: vars")
     # print(sapply(ls(), function(x) object_size(mget(x, inherits = TRUE))))
-    return(list(RVP = pct_batch, sum.squares = SS))
+    return(list(HVP = pct_batch, sum.squares = SS))
   } else {
     feature_names <- rownames(X)
     ss_total <- rowSums(
@@ -302,7 +302,7 @@ RVP.SummarizedExperiment <- function(
     # Warning: Recursive call
     SS_classes <- lapply(
       mapply(
-        .RVP_sparseMatrix, X_classes, batch_classes,
+        .HVP_sparseMatrix, X_classes, batch_classes,
         MoreArgs = list(cls = NULL),
         SIMPLIFY = FALSE
       ),
@@ -312,7 +312,7 @@ RVP.SummarizedExperiment <- function(
     SS_classes <- SS_classes[!is.na(SS_classes)]
     if (length(SS_classes) == 0L) {
       confound_message <- paste(
-        "RVP is unable to quantify batch effects as batch and class",
+        "HVP is unable to quantify batch effects as batch and class",
         "are completely confounded!"
       )
       stop(confound_message)
@@ -334,6 +334,6 @@ RVP.SummarizedExperiment <- function(
       sparse = TRUE
     )
 
-    return(list(RVP = pct_batch, sum.squares = SS))
+    return(list(HVP = pct_batch, sum.squares = SS))
   }
 }

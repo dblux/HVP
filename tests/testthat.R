@@ -1,4 +1,4 @@
 library(testthat)
-library(RVP)
+library(HVP)
 
-test_check("RVP")
+test_check("HVP")

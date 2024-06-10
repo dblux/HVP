@@ -47,53 +47,53 @@ test_that("split_cols works when arg: f is a list of vectors", {
   )
 })
 
-# Test: RVP
-RVP_TRUE <- 0.01011387
-test_that("RVP works on a dense matrix", {
+# Test: HVP
+HVP_TRUE <- 0.01011387
+test_that("HVP works on a dense matrix", {
   # test that arg: batch, cls can be of type {numeric, character, factor}
-  expect_equal(RVP(dense, batch, class1)$RVP, RVP_TRUE)
-  expect_equal(RVP(dense, as.factor(batch), class1)$RVP, RVP_TRUE)
-  expect_equal(RVP(dense, as.character(batch), class1)$RVP, RVP_TRUE)
-  expect_equal(RVP(dense, batch, as.factor(class1))$RVP, RVP_TRUE)
-  expect_equal(RVP(dense, batch, class1_int)$RVP, RVP_TRUE)
+  expect_equal(HVP(dense, batch, class1)$HVP, HVP_TRUE)
+  expect_equal(HVP(dense, as.factor(batch), class1)$HVP, HVP_TRUE)
+  expect_equal(HVP(dense, as.character(batch), class1)$HVP, HVP_TRUE)
+  expect_equal(HVP(dense, batch, as.factor(class1))$HVP, HVP_TRUE)
+  expect_equal(HVP(dense, batch, class1_int)$HVP, HVP_TRUE)
 })
 
-test_that("RVP works when arg: f is a list of vectors", {
-  expect_no_error(RVP(dense, batch, list(class1, class2)))
+test_that("HVP works when arg: f is a list of vectors", {
+  expect_no_error(HVP(dense, batch, list(class1, class2)))
 })
 
-test_that("RVP throws error when batch and class are completely confounded", {
+test_that("HVP throws error when batch and class are completely confounded", {
   expect_error(
-    RVP(dense, batch, list(class1, class3)),
+    HVP(dense, batch, list(class1, class3)),
     "batch and class are completely confounded"
   )
 })
 
-test_that("RVP works on a sparse matrix", {
-  expect_equal(RVP(sparse, batch, class1)$RVP, RVP_TRUE)
+test_that("HVP works on a sparse matrix", {
+  expect_equal(HVP(sparse, batch, class1)$HVP, HVP_TRUE)
 })
 
-test_that("RVP works on a data frame", {
-  expect_equal(RVP(data, batch, class1)$RVP, RVP_TRUE)
+test_that("HVP works on a data frame", {
+  expect_equal(HVP(data, batch, class1)$HVP, HVP_TRUE)
 })
 
-test_that("RVP works on a SingleCellExperiment object", {
-  expect_equal(RVP(sce, "batch", "class1")$RVP, RVP_TRUE)
+test_that("HVP works on a SingleCellExperiment object", {
+  expect_equal(HVP(sce, "batch", "class1")$HVP, HVP_TRUE)
 })
 
-test_that("RVP works on a Seurat object", {
-  expect_equal(RVP(seu, "batch", "class1")$RVP, RVP_TRUE)
+test_that("HVP works on a Seurat object", {
+  expect_equal(HVP(seu, "batch", "class1")$HVP, HVP_TRUE)
 })
 
 PVALUE <- 0.404
 cat("Running permutation test...", fill = TRUE)
 test_that("Permutation test returns p.value and null.distribution", {
   expect_no_error({
-    obj <- RVP(dense, batch, class1, nperm = 1000)
+    obj <- HVP(dense, batch, class1, nperm = 1000)
     expect_equal(obj$p.value, PVALUE)
   })
 })
 
-test_that("Helper RVP function that uses sparse matrices works", {
-  expect_equal(RVP(sparse, batch, class1, use.sparse = TRUE)$RVP, RVP_TRUE)
+test_that("Helper HVP function that uses sparse matrices works", {
+  expect_equal(HVP(sparse, batch, class1, use.sparse = TRUE)$HVP, HVP_TRUE)
 })
