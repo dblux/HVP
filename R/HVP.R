@@ -169,16 +169,21 @@ HVP.SummarizedExperiment <- function(
 #' @noRd
 #'
 .HVP <- function(X, batch, cls) {
-  ### CHECK ARGS ###
   if (ncol(X) != length(batch))
     stop("Length of batch does not match number of columns in X!")
-
   if (length(unique(batch)) == 1L) {
     # Use NA as is.na works on lists
     message("Only one batch present!")
     return(list(HVP = 0, sum.squares = NA)) # only one batch is present
   }
-  X[is.na(X)] <- 0
+  ### MISSING VALUES ###
+  # Check for missing values if called from global env or call name is .HVP().
+  # I.e. Do not check for missing values when function is called recursively.
+  # S3 method dispatch also returns .HVP().
+  if (sys.nframe() == 1 || identical(deparse(sys.call()[1]), ".HVP()")) {
+    if (any(is.na(X))) # is.na allocates memory
+      X[is.na(X)] <- 0
+  }
 
   ### COMPUTE HVP ###
   if (is.null(cls)) {
@@ -251,16 +256,24 @@ HVP.SummarizedExperiment <- function(
 #' @noRd
 #'
 .HVP_sparseMatrix <- function(X, batch, cls = NULL) {
-  ### CHECK ARGS ###
   if (ncol(X) != length(batch))
     stop("Length of batch does not match number of columns in X!")
-  
   if (length(unique(batch)) == 1L) {
     # Use NA as is.na works on lists
     message("Only one batch present!")
     return(list(HVP = 0, sum.squares = NA)) # only one batch is present
   }
-  X[is.na(X)] <- 0
+  ### MISSING VALUES ###
+  # Check for missing values if called from global env or call name is .HVP().
+  # I.e. Do not check for missing values when function is called recursively.
+  # S3 method dispatch also returns .HVP().
+  if (
+    sys.nframe() == 1 ||
+    identical(deparse(sys.call()[1]), ".HVP_sparseMatrix()")
+  ) {
+    if (any(is.na(X))) # is.na allocates memory
+      X[is.na(X)] <- 0
+  }
   
   ### COMPUTE HVP ###
   if (is.null(cls)) {
