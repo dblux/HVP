@@ -3,6 +3,7 @@
 S3method(HVP,Seurat)
 S3method(HVP,SummarizedExperiment)
 S3method(HVP,default)
+export(.HVP)
 export(HVP)
 export(sigmoid)
 export(simulate_microarray)

@@ -167,6 +167,7 @@ HVP.SummarizedExperiment <- function(
 #'
 #' @keywords internal
 #' @noRd
+#' @export
 #'
 .HVP <- function(X, batch, cls) {
   if (ncol(X) != length(batch))
