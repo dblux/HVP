@@ -11,6 +11,7 @@ Suggests: SingleCellExperiment, SummarizedExperiment, SeuratObject, testthat
 License: MIT + file LICENSE
 Encoding: UTF-8
 RoxygenNote: 7.2.3
+biocViews: SingleCell, Transcriptomics, GeneExpression, BatchEffect
 Collate: 
     'utils.R'
     'HVP.R'
