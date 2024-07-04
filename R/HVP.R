@@ -111,6 +111,11 @@ HVP.Seurat <- function(
   if (!requireNamespace("SeuratObject", quietly = TRUE))
     stop("Please install SeuratObject package!")
 
+  metadata <- x[[]]
+  stopifnot(batchname %in% colnames(metadata))
+  if (!is.null(classname))
+    stopifnot(all(classname %in% colnames(metadata)))
+
   # GetAssayData is for Seurat assay v3/v4
   assay_data <- SeuratObject::GetAssayData(x)
   batch <- x@meta.data[[batchname]]
@@ -145,6 +150,11 @@ HVP.SummarizedExperiment <- function(
   # Suggests: SummarizedExperiment 
   if (!requireNamespace("SummarizedExperiment", quietly = TRUE))
     stop("Please install SummarizedExperiment package!")
+
+  metadata <- SummarizedExperiment::colData(x)
+  stopifnot(batchname %in% colnames(metadata))
+  if (!is.null(classname))
+    stopifnot(all(classname %in% colnames(metadata)))
 
   assay_data <- if (is.null(assayname) || is.na(assayname)) {
     SummarizedExperiment::assay(x)
