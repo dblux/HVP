@@ -23,35 +23,46 @@ simulate_microarray(
 )
 }
 \arguments{
-\item{m}{number of features.}
+\item{m}{number of genes.}
 
 \item{crosstab}{matrix of contingency table specifying number of samples in
 each class-batch condition, with classes as rows and batches as columns.}
 
-\item{delta}{magnitude of additive batch effects.}
+\item{delta}{magnitude of additive batch effects (i.e. standard deviation
+of normal distribution modelling batch log fold change means of all genes).}
 
-\item{gamma}{magnitude of multiplicative batch effects. Variance parameter
-of Normal distribution modelling batch effects across samples in a batch.}
+\item{gamma}{magnitude of multiplicative batch effects (i.e. standard
+deviation of normal distribution modelling log batch effect terms of all
+samples in a batch).}
 
-\item{phi}{percentage of differentially expressed features.}
+\item{phi}{percentage of differentially expressed genes.}
 
-\item{c}{shape parameter of Gamma distribution modelling log fold-change.}
+\item{c}{shape parameter of Gamma distribution modelling class log fold
+change means of all genes.}
 
-\item{d}{rate parameter of Gamma distribution modelling log fold-change.}
+\item{d}{rate parameter of Gamma distribution modelling class log fold
+change means of all genes.}
 
-\item{epsilon}{magnitude of feature-wise variation.}
+\item{epsilon}{magnitude of random noise across samples (i.e. standard
+deviation of normal distribution modelling log expression values with
+class effects only).}
 
-\item{kappa}{magnitude of sample-specific variation (scaling factor).}
+\item{kappa}{standard deviation of normal distribution modelling log scaling
+factors of all samples.}
 
-\item{a}{shape parameter of Gamma distribution modelling basal expression.}
+\item{a}{shape parameter of Gamma distribution modelling basal log mean
+expression of all genes.}
 
-\item{b}{rate parameter of Gamma distribution modelling basal expression.}
+\item{b}{rate parameter of Gamma distribution modelling basal log mean
+expression of all genes.}
 
 \item{dropout}{logical indicating whether to perform dropout}
 
-\item{r}{inverse scale parameter of the sigmoid function.}
+\item{r}{inverse scale parameter of the sigmoid function used to calculate
+probability of dropout for each value.}
 
-\item{s}{midpoint parameter of the sigmoid function.}
+\item{s}{midpoint parameter of the sigmoid function used to calculate
+probability of dropout for each value.}
 
 \item{seed}{numeric specifying random seed. Defaults to no seed.}
 }
@@ -60,15 +71,17 @@ A list containing the following components:
   \describe{
     \item{`X`}{matrix with dimensions `(m, n)` of log expression values.}
     \item{`metadata`}{data frame with `n` rows of sample metadata.}
-    \item{`diff.features`}{character vector, names of differentially
-      expressed features.}
-    \item{`W`}{matrix with dimensions `(m, n)` of log expression values
-      without addition of batch effect term.}
-    \item{`batch.terms`}{matrix with dimensions (m, n) of batch effect terms.}
-    \item{`class.logfc`}{matrix of mean log fold change for each feature
-      for classes.}
-    \item{`batch.logfc`}{matrix of mean log fold change for each features
-      for batches.}
+    \item{`diff.genes`}{
+      character vector, names of differentially expressed genes.}
+    \item{`W`}{
+      matrix with dimensions `(m, n)` of log expression values with class
+      effects only.}
+    \item{`batch.terms`}{
+      matrix with dimensions `(m, n)` of log batch effect terms.}
+    \item{`class.logfc`}{
+      matrix of class log fold change means for each gene in each class}
+    \item{`batch.logfc`}{
+      matrix of batch log fold change means for each gene in each batch.}
     \item{`params`}{list of parameters supplied.}
   }
 }

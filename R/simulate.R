@@ -1,36 +1,49 @@
 #' Simulate log-transformed gene expression microarray data
 #'
-#' @param m number of features.
+#' @param m number of genes.
 #' @param crosstab matrix of contingency table specifying number of samples in
 #'   each class-batch condition, with classes as rows and batches as columns.
-#' @param delta magnitude of additive batch effects.
-#' @param gamma magnitude of multiplicative batch effects. Variance parameter
-#'   of Normal distribution modelling batch effects across samples in a batch.
-#' @param phi percentage of differentially expressed features.
-#' @param c shape parameter of Gamma distribution modelling log fold-change.
-#' @param d rate parameter of Gamma distribution modelling log fold-change.
-#' @param epsilon magnitude of feature-wise variation.
-#' @param kappa magnitude of sample-specific variation (scaling factor).
-#' @param a shape parameter of Gamma distribution modelling basal expression.
-#' @param b rate parameter of Gamma distribution modelling basal expression.
+#' @param delta magnitude of additive batch effects (i.e. standard deviation
+#'   of normal distribution modelling batch log fold change means of all genes).
+#' @param gamma magnitude of multiplicative batch effects (i.e. standard
+#'   deviation of normal distribution modelling log batch effect terms of all
+#'   samples in a batch).
+#' @param phi percentage of differentially expressed genes.
+#' @param c shape parameter of Gamma distribution modelling class log fold
+#'   change means of all genes.
+#' @param d rate parameter of Gamma distribution modelling class log fold
+#'   change means of all genes.
+#' @param epsilon magnitude of random noise across samples (i.e. standard
+#'   deviation of normal distribution modelling log expression values with
+#'   class effects only).
+#' @param kappa standard deviation of normal distribution modelling log scaling
+#'   factors of all samples.
+#' @param a shape parameter of Gamma distribution modelling basal log mean
+#'   expression of all genes.
+#' @param b rate parameter of Gamma distribution modelling basal log mean
+#'   expression of all genes.
 #' @param dropout logical indicating whether to perform dropout
-#' @param r inverse scale parameter of the sigmoid function.
-#' @param s midpoint parameter of the sigmoid function.
+#' @param r inverse scale parameter of the sigmoid function used to calculate
+#'    probability of dropout for each value.
+#' @param s midpoint parameter of the sigmoid function used to calculate
+#'    probability of dropout for each value.
 #' @param seed numeric specifying random seed. Defaults to no seed.
 #'
 #' @returns A list containing the following components:
 #'   \describe{
 #'     \item{`X`}{matrix with dimensions `(m, n)` of log expression values.}
 #'     \item{`metadata`}{data frame with `n` rows of sample metadata.}
-#'     \item{`diff.features`}{character vector, names of differentially
-#'       expressed features.}
-#'     \item{`W`}{matrix with dimensions `(m, n)` of log expression values
-#'       without addition of batch effect term.}
-#'     \item{`batch.terms`}{matrix with dimensions (m, n) of batch effect terms.}
-#'     \item{`class.logfc`}{matrix of mean log fold change for each feature
-#'       for classes.}
-#'     \item{`batch.logfc`}{matrix of mean log fold change for each features
-#'       for batches.}
+#'     \item{`diff.genes`}{
+#'       character vector, names of differentially expressed genes.}
+#'     \item{`W`}{
+#'       matrix with dimensions `(m, n)` of log expression values with class
+#'       effects only.}
+#'     \item{`batch.terms`}{
+#'       matrix with dimensions `(m, n)` of log batch effect terms.}
+#'     \item{`class.logfc`}{
+#'       matrix of class log fold change means for each gene in each class}
+#'     \item{`batch.logfc`}{
+#'       matrix of batch log fold change means for each gene in each batch.}
 #'     \item{`params`}{list of parameters supplied.}
 #'   }
 #'
@@ -86,24 +99,24 @@ simulate_microarray <- function(
     row.names = sid
   )
 
-  log_psi <- rgamma(m, a, rate = b)
+  psi <- rgamma(m, a, rate = b)
   # Log fold-change factors for each class
   # Class A has zero log fold change w.r.t. itself
-  log_rho <- matrix(0, m, n_class)
-  colnames(log_rho) <- LETTERS[seq_len(n_class)]
-  diff.features <- NULL
+  rho <- matrix(0, m, n_class)
+  colnames(rho) <- LETTERS[seq_len(n_class)]
+  diff.genes <- NULL
   if (n_class > 1) {
     n_upreg <- n_downreg <- round(phi * m / 2, 0)
     n_diffexpr <- n_upreg + n_downreg
     for (g in seq(2, n_class)) {
-      diff.features <- sort(sample(seq_len(m), n_diffexpr))
-      upreg.features <- sort(sample(diff.features, n_upreg))
-      downreg.features <- setdiff(diff.features, upreg.features)
-      for (i in upreg.features) {
-        log_rho[i, g] <- rgamma(1, c, rate = d)
+      diff.genes <- sort(sample(seq_len(m), n_diffexpr))
+      upreg.genes <- sort(sample(diff.genes, n_upreg))
+      downreg.genes <- setdiff(diff.genes, upreg.genes)
+      for (i in upreg.genes) {
+        rho[i, g] <- rgamma(1, c, rate = d)
       }
-      for (i in downreg.features) {
-        log_rho[i, g] <- -rgamma(1, c, rate = d)
+      for (i in downreg.genes) {
+        rho[i, g] <- -rgamma(1, c, rate = d)
       }
     }
   }
@@ -114,21 +127,21 @@ simulate_microarray <- function(
   for (i in seq_len(m)) {
     for (j in seq_len(n)) {
       g <- gs[j]
-      Z[i, j] <- rnorm(1, log_psi[i] + log_rho[i, g], epsilon)
+      Z[i, j] <- rnorm(1, psi[i] + rho[i, g], epsilon)
     }
   }
 
   # Sample specific scaling term (in log space)
-  log_alpha <- rnorm(n, 0, kappa)
-  W <- sweep(Z, 2, log_alpha, `+`)
+  alpha <- rnorm(n, 0, kappa)
+  W <- sweep(Z, 2, alpha, `+`)
 
   # Batch effects
-  log_beta <- matrix(rnorm(m * n_batch, 0, delta), m, n_batch)
+  beta <- matrix(rnorm(m * n_batch, 0, delta), m, n_batch)
   omega <- matrix(0, m, n)
   for (i in seq_len(m)) {
     for (j in seq_len(n)) {
       k <- ks[j]
-      omega[i, j] <- rnorm(1, log_beta[i, k], gamma)
+      omega[i, j] <- rnorm(1, beta[i, k], gamma)
     }
   }
 
@@ -147,10 +160,13 @@ simulate_microarray <- function(
   }
 
   list(
-    X = X, metadata = metadata,
-    diff.features = diff.features,
-    W = W, batch.terms = omega,
-    class.logfc = log_rho, batch.logfc = log_beta,
+    X = X,
+    metadata = metadata,
+    diff.genes = diff.genes,
+    W = W,
+    batch.terms = omega,
+    class.logfc = rho,
+    batch.logfc = beta,
     params = params
   )
 }
