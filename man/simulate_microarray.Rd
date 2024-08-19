@@ -5,8 +5,8 @@
 \title{Simulate log-transformed gene expression microarray data}
 \usage{
 simulate_microarray(
-  m,
   crosstab,
+  m,
   delta = 1,
   gamma = 0.5,
   phi = 0.2,
@@ -18,15 +18,14 @@ simulate_microarray(
   b = 5,
   dropout = FALSE,
   r = 2,
-  s = -6,
-  seed = NA
+  s = -6
 )
 }
 \arguments{
-\item{m}{number of genes.}
-
 \item{crosstab}{matrix of contingency table specifying number of samples in
 each class-batch condition, with classes as rows and batches as columns.}
+
+\item{m}{number of genes.}
 
 \item{delta}{magnitude of additive batch effects (i.e. standard deviation
 of normal distribution modelling batch log fold change means of all genes).}
@@ -63,8 +62,6 @@ probability of dropout for each value.}
 
 \item{s}{midpoint parameter of the sigmoid function used to calculate
 probability of dropout for each value.}
-
-\item{seed}{numeric specifying random seed. Defaults to no seed.}
 }
 \value{
 A list containing the following components:
@@ -73,7 +70,7 @@ A list containing the following components:
     \item{`metadata`}{data frame with `n` rows of sample metadata.}
     \item{`diff.genes`}{
       character vector, names of differentially expressed genes.}
-    \item{`W`}{
+    \item{`Y`}{
       matrix with dimensions `(m, n)` of log expression values with class
       effects only.}
     \item{`batch.terms`}{
@@ -87,6 +84,12 @@ A list containing the following components:
 }
 \description{
 Simulate log-transformed gene expression microarray data
+}
+\examples{
+
+crosstab <- matrix(10, 3, 2)
+data <- simulate_microarray(crosstab, 100)
+
 }
 \author{
 Wei Xin Chan

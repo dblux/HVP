@@ -1,8 +1,8 @@
 #' Simulate log-transformed gene expression microarray data
 #'
-#' @param m number of genes.
 #' @param crosstab matrix of contingency table specifying number of samples in
 #'   each class-batch condition, with classes as rows and batches as columns.
+#' @param m number of genes.
 #' @param delta magnitude of additive batch effects (i.e. standard deviation
 #'   of normal distribution modelling batch log fold change means of all genes).
 #' @param gamma magnitude of multiplicative batch effects (i.e. standard
@@ -27,7 +27,6 @@
 #'    probability of dropout for each value.
 #' @param s midpoint parameter of the sigmoid function used to calculate
 #'    probability of dropout for each value.
-#' @param seed numeric specifying random seed. Defaults to no seed.
 #'
 #' @returns A list containing the following components:
 #'   \describe{
@@ -35,7 +34,7 @@
 #'     \item{`metadata`}{data frame with `n` rows of sample metadata.}
 #'     \item{`diff.genes`}{
 #'       character vector, names of differentially expressed genes.}
-#'     \item{`W`}{
+#'     \item{`Y`}{
 #'       matrix with dimensions `(m, n)` of log expression values with class
 #'       effects only.}
 #'     \item{`batch.terms`}{
@@ -52,11 +51,16 @@
 #' @importFrom stats rbinom rgamma rnorm
 #' @importFrom utils capture.output
 #'
+#' @examples
+#'
+#' crosstab <- matrix(10, 3, 2)
+#' data <- simulate_microarray(crosstab, 100)
+#'
 #' @export
 #'
 simulate_microarray <- function(
-  m,
   crosstab,
+  m,
   delta = 1,
   gamma = 0.5,
   phi = 0.2,
@@ -68,8 +72,7 @@ simulate_microarray <- function(
   b = 5,
   dropout = FALSE,
   r = 2,
-  s = -6,
-  seed = NA
+  s = -6
 ) {
   params <- list(
     crosstab = crosstab,
@@ -77,13 +80,8 @@ simulate_microarray <- function(
     phi = phi, c = c, d = d,
     epsilon = epsilon, kappa = kappa,
     a = a, b = b, 
-    dropout = dropout, r = r, s = s,
-    seed = seed
+    dropout = dropout, r = r, s = s
   )
-
-  if (!is.na(seed))
-    set.seed(seed)
-
   n <- sum(crosstab)
   n_class <- nrow(crosstab)
   n_batch <- ncol(crosstab)
@@ -133,7 +131,7 @@ simulate_microarray <- function(
 
   # Sample specific scaling term (in log space)
   alpha <- rnorm(n, 0, kappa)
-  W <- sweep(Z, 2, alpha, `+`)
+  Y <- sweep(Z, 2, alpha, `+`)
 
   # Batch effects
   beta <- matrix(rnorm(m * n_batch, 0, delta), m, n_batch)
@@ -145,7 +143,7 @@ simulate_microarray <- function(
     }
   }
 
-  X <- W + omega
+  X <- Y + omega
   X[X < 0] <- 0 # set negative values to zero
 
   if (dropout) {
@@ -163,7 +161,7 @@ simulate_microarray <- function(
     X = X,
     metadata = metadata,
     diff.genes = diff.genes,
-    W = W,
+    Y = Y,
     batch.terms = omega,
     class.logfc = rho,
     batch.logfc = beta,
@@ -180,6 +178,10 @@ simulate_microarray <- function(
 #'
 #' @returns A numeric scalar/vector/matrix of the same dimensions containing
 #'   the transformed values.
+#'
+#' @examples
+#'
+#' p <- sigmoid(0.5)
 #'
 #' @export
 #'
