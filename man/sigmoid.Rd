@@ -20,3 +20,8 @@ A numeric scalar/vector/matrix of the same dimensions containing
 \description{
 Sigmoid function
 }
+\examples{
+
+p <- sigmoid(0.5)
+
+}

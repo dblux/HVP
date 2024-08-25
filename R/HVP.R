@@ -49,6 +49,14 @@ HVP <- function(x, ...) UseMethod("HVP", x)
 #' @importFrom progress progress_bar
 #' @importFrom utils capture.output
 #'
+#' @examples
+#'
+#' X <- matrix(rnorm(1000), 50, 20)
+#' batch <- factor(rep(1:2, each = 10))
+#' class <- factor(rep(LETTERS[1:2], 10))
+#' 
+#' res <- HVP(X, batch, class)
+#'
 #' @rdname HVP
 #' @export
 #'

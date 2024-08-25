@@ -75,6 +75,15 @@ S3 method for `SummarizedExperiment` is applicable for the
   `SingleExperiment` class as well, as it inherits from the
   `SummarizedExperiment` class.
 }
+\examples{
+
+X <- matrix(rnorm(1000), 50, 20)
+batch <- factor(rep(1:2, each = 10))
+class <- factor(rep(LETTERS[1:2], 10))
+
+res <- HVP(X, batch, class)
+
+}
 \author{
 Wei Xin Chan
 }

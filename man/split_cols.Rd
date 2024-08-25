@@ -21,3 +21,10 @@ List of objects split by columns
 \description{
 Splits subsettable objects according to their columns
 }
+\examples{
+
+X <- matrix(1:60, 10, 6)
+cond <- rep(1:3, each = 2)
+split_cols(X, cond)
+
+}
