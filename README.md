@@ -29,8 +29,8 @@ library(HVP)
 # rows representing classes and columns representing batches.
 crosstab <- matrix(5, 3, 2)
 
-# Simulate microarray data with 100 features
-simdata <- simulate_microarray(100, crosstab)
+# Simulate bulk gene expression data with 100 features
+simdata <- simulate_bulkexpr(crosstab, 100)
 
 X <- simdata$X    # matrix with dimensions (nfeature, nsamples)
 batch <- simdata$metadata$batch    # vector representing batch
