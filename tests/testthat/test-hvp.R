@@ -37,8 +37,8 @@ seu <- SeuratObject::CreateSeuratObject(
 ########## UNIT TESTS ##########
 
 # Test: Utility functions
-test_that("split_cols works when arg: f is a list of vectors", {
-  list_dense <- split_cols(dense, list(class1, class2), drop = TRUE)
+test_that("splitCols works when arg: f is a list of vectors", {
+  list_dense <- splitCols(dense, list(class1, class2), drop = TRUE)
 
   expect_named(list_dense, c("A.C", "B.C", "A.D", "B.D"))
   expect_identical(

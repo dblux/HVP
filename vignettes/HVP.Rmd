@@ -63,7 +63,7 @@ devtools::install_github("dblux/HVP")
 
 # Quick start
 
-We show how to use the `HVP` function to quantify the magnitude of batch effects in a `matrix` object containing log-normalised gene expression values. First, we use the `simulate_bulkexpr` function provided in the `r BiocStyle::Githubpkg("dblux/HVP")` package to simulate gene expression data with three classes and two batches (see the [simulation](#simulation) section for further details). We indicate the batch-class design using a cross table with rows representing classes and columns representing batches, specifying the number of samples in each batch-class group in the corresponding cell of the table. After simulating the data, we provide the 1) `matrix` containing log-normalised expression values, along with the 2) batch information and 3) class information to the `HVP` function, which in turn returns a list containing two elements:
+We show how to use the `HVP` function to quantify the magnitude of batch effects in a `matrix` object containing log-normalised gene expression values. First, we use the `simulateMicroarray` function provided in the `r BiocStyle::Githubpkg("dblux/HVP")` package to simulate gene expression data with three classes and two batches (see the [simulation](#simulation) section for further details). We indicate the batch-class design using a cross table with rows representing classes and columns representing batches, specifying the number of samples in each batch-class group in the corresponding cell of the table. After simulating the data, we provide the 1) `matrix` containing log-normalised expression values, along with the 2) batch information and 3) class information to the `HVP` function, which in turn returns a list containing two elements:
 
 * **HVP**: The estimated proportion of variance associated with batch effects in the data set.
 
@@ -73,8 +73,8 @@ We show how to use the `HVP` function to quantify the magnitude of batch effects
 library(HVP)
 
 crosstab <- matrix(10, 3, 2)
-# Simulate bulk gene expression data with 100 features
-data <- simulate_bulkexpr(crosstab, 100)
+# Simulate microarray data with 100 features
+data <- simulateMicroarray(crosstab, 100)
 
 X <- data$X # matrix with dimensions (nfeature, nsamples)
 batch <- data$metadata$batch # vector representing batch
@@ -180,28 +180,28 @@ ggplot(null_distr) +
   )
 ```
 
-# Simulating bulk gene expression data {#simulation}
+# Simulating microarray gene expression data {#simulation}
 
-We propose a two-stage Bayesian hierarchical model to simulate log expression values of bulk gene expression data with batch and class effects, which is illustrated in the figure below. Our model simulates batch effects in all genes, and is able to simulate both additive and multiplicative batch effects (in log space).
+We propose a two-stage Bayesian hierarchical model to simulate log expression values of microarray gene expression data with batch and class effects, which is illustrated in the figure below. Our model simulates batch effects in all genes, and is able to simulate both additive and multiplicative batch effects (in log space).
 
 ![](assets/simulate-bulkexpr.png)
 
-We implement the proposed Bayesian hierarchical model as the `simulate_bulkexpr` function, which we include in the `r BiocStyle::Githubpkg("dblux/HVP")` package. At the moment, the `simulate_bulkexpr` function only has the option to simulate additive batch effects. Users are able to specify the magnitude of batch and class effects, percentage of differentially expressed genes, and other distribution parameters to simulate gene expression data tailored for their needs. The names of the optional arguments correspond to the distribution parameters (highlighted in yellow) in the figure above. Please refer to the documentation provided in R (`?simulate_bulkexpr`) for details on each parameter.
+We implement the proposed Bayesian hierarchical model as the `simulateMicroarray` function, which we include in the `r BiocStyle::Githubpkg("dblux/HVP")` package. At the moment, the `simulateMicroarray` function only has the option to simulate additive batch effects. Users are able to specify the magnitude of batch and class effects, percentage of differentially expressed genes, and other distribution parameters to simulate gene expression data tailored for their needs. The names of the optional arguments correspond to the distribution parameters (highlighted in yellow) in the figure above. Please refer to the documentation provided in R (`?simulateMicroarray`) for details on each parameter.
 
-The `simulate_bulkexpr` function requires a cross table specifying the number of samples in each batch-class group to simulate. The rows and columns of the cross table are to correspond to classes and batches, respectively. We show how to simulate a data set with three classes and two batches, with ten samples in each batch-class group:
+The `simulateMicroarray` function requires a cross table specifying the number of samples in each batch-class group to simulate. The rows and columns of the cross table are to correspond to classes and batches, respectively. We show how to simulate a data set with three classes and two batches, with ten samples in each batch-class group:
 
 ```{r simulate}
 crosstab <- matrix(10, 3, 2)
 crosstab
 
-bulk_expr <- simulate_bulkexpr(crosstab, 100) # 100 genes
-names(bulk_expr)
-dim(bulk_expr$X)
-head(bulk_expr$metadata)
+data <- simulateMicroarray(crosstab, 100) # 100 genes
+names(data)
+dim(data$X)
+head(data$metadata)
 
-X <- bulk_expr$X
-batch <- bulk_expr$metadata$batch
-class <- bulk_expr$metadata$class
+X <- data$X
+batch <- data$metadata$batch
+class <- data$metadata$class
 ```
 
 # HVP: Theory {#theory}

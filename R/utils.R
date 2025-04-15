@@ -11,11 +11,11 @@
 #'
 #' X <- matrix(1:60, 10, 6)
 #' cond <- rep(1:3, each = 2)
-#' split_cols(X, cond)
+#' splitCols(X, cond)
 #'
 #' @export
 #'
-split_cols <- function(x, f, drop = FALSE, ...) {
+splitCols <- function(x, f, drop = FALSE, ...) {
   if (is.list(f)) {
     stopifnot(all(sapply(f, length) == ncol(x)))
   } else {

@@ -1,4 +1,4 @@
-#' Simulate log-transformed bulk gene expression data
+#' Simulate log-transformed microarray gene expression data
 #'
 #' @param crosstab matrix of contingency table specifying number of samples in
 #'   each class-batch condition, with classes as rows and batches as columns.
@@ -54,11 +54,11 @@
 #' @examples
 #'
 #' crosstab <- matrix(10, 3, 2)
-#' data <- simulate_bulkexpr(crosstab, 100)
+#' data <- simulateMicroarray(crosstab, 100)
 #'
 #' @export
 #'
-simulate_bulkexpr <- function(
+simulateMicroarray <- function(
   crosstab,
   m,
   delta = 1,

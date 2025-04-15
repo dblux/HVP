@@ -205,7 +205,7 @@ HVP.SummarizedExperiment <- function(
     feature_names <- rownames(X)
     feature_means <- rowMeans(X)
     ss_total <- rowSums((X - feature_means) ^ 2)
-    X_batches <- split_cols(X, batch, drop = TRUE)
+    X_batches <- splitCols(X, batch, drop = TRUE)
     batch_means <- lapply(X_batches, rowMeans)
     batch_means <- do.call(cbind, batch_means)
     nperbatches <- sapply(X_batches, ncol)
@@ -224,7 +224,7 @@ HVP.SummarizedExperiment <- function(
   } else {
     feature_names <- rownames(X)
     ss_total <- rowSums((X - rowMeans(X)) ^ 2)
-    X_classes <- split_cols(X, cls, drop = TRUE)
+    X_classes <- splitCols(X, cls, drop = TRUE)
     batch_classes <- split(batch, cls, drop = TRUE)
     # Warning: Recursive call
     SS_classes <- lapply(
@@ -284,7 +284,7 @@ HVP.SummarizedExperiment <- function(
     feature_names <- rownames(X)
     feature_means <- rowMeans(X, sparseResult = TRUE)
     ss_total <- rowSums((X - feature_means) ^ 2, sparseResult = TRUE)
-    X_batches <- split_cols(X, batch, drop = TRUE)
+    X_batches <- splitCols(X, batch, drop = TRUE)
     batch_means <- lapply(
       X_batches,
       function(X) as(rowMeans(X, sparseResult = TRUE), "sparseMatrix")
@@ -314,7 +314,7 @@ HVP.SummarizedExperiment <- function(
       (X - rowMeans(X, sparseResult = TRUE)) ^ 2,
       sparseResult = TRUE
     )
-    X_classes <- split_cols(X, cls, drop = TRUE)
+    X_classes <- splitCols(X, cls, drop = TRUE)
     batch_classes <- split(batch, cls, drop = TRUE)
     # Warning: Recursive call
     SS_classes <- lapply(
