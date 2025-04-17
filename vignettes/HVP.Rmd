@@ -121,6 +121,22 @@ Applying the `HVP` function on a `SingleCellExperiment` object is straightforwar
 res_sce <- HVP(sce_data, "Batch", "Group")
 ```
 
+We also provide an example below of how to apply the `HVP` function on real-world scRNA-seq data that can be downloaded using the `r BiocStyle::Biocpkg('ExperimentHub')` package. The data set is stored as a `SingleCellExperiment` object.
+
+```{r real, message = FALSE}
+library(ExperimentHub)
+library(scater)
+
+eh <- ExperimentHub()
+data <- query(eh, "muscData")
+kang <- data[["EH2259"]] # downloads data set
+kang_ctrl <- kang[rowSums(counts(kang)) > 0, kang$stim == 'ctrl']
+kang_ctrl <- logNormCounts(kang_ctrl)
+kang_ctrl$ind <- as.factor(kang_ctrl$ind)
+
+res <- HVP(kang_ctrl, "ind", "cell")
+```
+
 ## Class: `Seurat`
 
 Similarly, `HVP` can be used to quantify batch effects in `Seurat` objects by providing it with the arguments: 
