@@ -410,3 +410,47 @@ setMethod(
     return(new("hvp", HVP = pct_batch, sum.squares = SS))
   }
 }
+
+
+#' Plot results of permutation test
+#'
+#' @param x hvp S4 class containing HVP results after permutation testing.
+#' @param y ignored argument for compatibility with generic plot function. 
+#' @param ... ignored argument for compatibility with generic plot function. 
+#'
+#' @details Plots the null distribution of the permutation test. 
+#'
+#' @export
+#'
+setMethod(
+  "plot", signature(x = "hvp", y = "missing"),
+  function(x, y, ...) {
+    # Suggests: SummarizedExperiment 
+    if (!requireNamespace("ggplot2", quietly = TRUE))
+      stop("Please install ggplot2 package!")
+
+    null_distr <- data.frame(hvp = x@null.distribution)
+    nperm <- nrow(null_distr)
+
+    ggplot(null_distr) +
+      geom_histogram(
+        aes(x = hvp), fill = "lightblue", col = "black", linewidth = 0.2
+      ) +
+      geom_vline(xintercept = x@HVP, col = "red") +
+      theme(
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()
+      ) +
+      labs(
+        title = sprintf("Permutation null distribution (n = %d)", nperm),
+        subtitle = "Data with batch effects",
+        x = "HVP", y = "Count"
+      ) +
+      annotate(
+        geom = "text", x = x@HVP - 0.01, y = 150,
+        label = sprintf("Observed HVP (p = %.2f)", x@p.value),
+        color = "red", cex = 2.7, angle = 90
+      )
+  }
+)
+

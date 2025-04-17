@@ -81,12 +81,12 @@ batch <- data$metadata$batch # vector representing batch
 class <- data$metadata$class # vector representing class
 
 res <- HVP(X, batch, class)
-res$HVP # proportion of variance attributable to batch effects
+res@HVP # proportion of variance attributable to batch effects
 ```
 
 # Quantifying batch effects using HVP
 
-The `HVP` function accepts as input objects from common classes that are used to store high-throughput biological data, such as the `SummarizedExperiment`, `SingleCellExperiment` and `Seurat`, in addition to base classes such as the `matrix` and `data.frame` classes. `HVP` is implemented as a S3 generic function that dispatches to different S3 class methods based on the class of the first argument `x`. The default S3 method is implemented for the classes `matrix` or `data.frame`, and S3 methods for `SummarizedExperiment`, `SingleCellExperiment` and `Seurat` have also been implemented. Users are free to implement their own S3 methods for other classes as well. We demonstrate below how to call the `HVP` function for objects of different classes. For array-like objects, please refer to the [quick start](#quick-start) section.
+The `HVP` function accepts as input objects from common classes that are used to store high-throughput biological data, such as the `SummarizedExperiment`, `SingleCellExperiment` and `Seurat`, in addition to base classes such as the `matrix` and `data.frame` classes. `HVP` is implemented as a S4 generic function that dispatches to different S4 class methods based on the class of the first argument `x`. The default S4 method is implemented for the classes `matrix` or `data.frame`, and S4 methods for `SummarizedExperiment`, `SingleCellExperiment` and `Seurat` have also been implemented. Users are free to implement their own S4 methods for other classes as well. We demonstrate below how to call the `HVP` function for objects of different classes. For array-like objects, please refer to the [quick start](#quick-start) section.
 
 ## Class: `SummarizedExperiment` / `SingleCellExperiment`
 
@@ -148,7 +148,7 @@ To determine whether batch effects are statistically significant in a data set, 
 
 ``` {r perm, message = FALSE}
 res_permtest <- HVP(X, batch, class, nperm = 1000)
-res_permtest$p.value
+res_permtest@p.value
 ```
 
 We plot a histogram of the null distribution of HVP values obtained from the permutation test below and indicate the HVP value observed in the original data set as well.
@@ -156,28 +156,7 @@ We plot a histogram of the null distribution of HVP values obtained from the per
 ```{r histogram, message = FALSE}
 library(ggplot2)
 
-null_distr <- data.frame(hvp = res_permtest$null.distribution)
-nperm <- length(res_permtest$null.distribution)
-
-ggplot(null_distr) +
-  geom_histogram(
-    aes(x = hvp), fill = "lightblue", col = "black", linewidth = 0.2
-  ) +
-  geom_vline(xintercept = res_permtest$HVP, col = "red") +
-  theme(
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank()
-  ) +
-  labs(
-    title = sprintf("Permutation null distribution (n = %d)", nperm),
-    subtitle = "Data with batch effects",
-    x = "HVP", y = "Count"
-  ) +
-  annotate(
-    geom = "text", x = res_permtest$HVP - 0.01, y = 150,
-    label = sprintf("Observed HVP (p = %.2f)", res_permtest$p.value),
-    color = "red", cex = 2.7, angle = 90
-  )
+plot(res_permtest)
 ```
 
 # Simulating microarray gene expression data {#simulation}
