@@ -49,7 +49,7 @@ setClass(
 #' @param x object to calculate HVP for.
 #' @param ... additional arguments to pass to S4 methods.
 #'
-#' @returns List containing the following components:
+#' @returns hvp S4 object with the following slots:
 #'   \describe{
 #'     \item{`HVP`}{the proportion of variance associated with batch effects.}
 #'     \item{`sum.squares`}{matrix of sum of squares between batch and total
@@ -419,6 +419,8 @@ setMethod(
 #' @param ... ignored argument for compatibility with generic plot function. 
 #'
 #' @details Plots the null distribution of the permutation test. 
+#'
+#' @returns ggplot object of null distribution of permutation test. 
 #'
 #' @export
 #'

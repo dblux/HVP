@@ -13,6 +13,9 @@
 
 \item{...}{ignored argument for compatibility with generic plot function.}
 }
+\value{
+ggplot object of null distribution of permutation test.
+}
 \description{
 Plot results of permutation test
 }

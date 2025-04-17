@@ -54,7 +54,7 @@ in run time.}
 assay is used.}
 }
 \value{
-List containing the following components:
+hvp S4 object with the following slots:
   \describe{
     \item{`HVP`}{the proportion of variance associated with batch effects.}
     \item{`sum.squares`}{matrix of sum of squares between batch and total
