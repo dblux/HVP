@@ -1,6 +1,40 @@
 #' @include utils.R
 #'
 NULL
+#'
+setClassUnion("numericOrNULL", c("numeric", "NULL"))
+
+#'
+#' HVP results class
+#'
+#' @description
+#' An S4 class to store the results from Hierarchical variance partitioning (HVP).
+#'
+#' @slot HVP numeric indicating the proportion of variance associated with
+#'   batch effects.
+#' @slot sum.squares matrix containing sum of squares between batches and
+#'   total sum of squares for all features.
+#' @slot p.value optional numeric of P-value from permutation test.
+#' @slot null.distribution optional numeric vector of null distribution of
+#'   HVP values.
+#'
+#' @docType class
+#' @exportClass hvp
+#'
+setClass(
+  "hvp",
+  slots = list(
+    HVP = "numeric",
+    sum.squares = "ANY",
+    p.value = "numericOrNULL",
+    null.distribution = "numericOrNULL"
+  ),
+  prototype = list(
+    p.value = NULL,
+    null.distribution = NULL 
+  )
+)
+
 
 #' Hierarchical variance partitioning (HVP)
 #'
@@ -8,12 +42,12 @@ NULL
 #' in a data set (the "HVP" value of a data set). To determine whether batch
 #' effects are statistically significant in a data set, a permutation test can
 #' be performed by setting `nperm` to a number above 100. `HVP` is
-#' an S3 generic function; methods can be added for new classes. S3 methods
-#' for class: array-like objects (default), `SummarizedExperiment`, 
+#' an S4 generic function; methods can be added for new classes. S4 methods
+#' for class: array-like objects, `SummarizedExperiment`, 
 #' `SingleCellExperiment` and `Seurat` are provided.
 #'
 #' @param x object to calculate HVP for.
-#' @param ... additional arguments to pass to S3 methods.
+#' @param ... additional arguments to pass to S4 methods.
 #'
 #' @returns List containing the following components:
 #'   \describe{
@@ -30,40 +64,20 @@ NULL
 #' @rdname HVP
 #' @export
 #'
-HVP <- function(x, ...) UseMethod("HVP", x)
+setGeneric("HVP", function(x, ...) standardGeneric("HVP"))
 
 
-#' @param batch vector, indicating the batch information of samples.
-#' @param cls vector or list of vectors with class information of samples.
-#' @param nperm numeric indicating number of permutations to simulate in the
-#'   Monte Carlo permutation test. We recommend a value no less than 1000.
-#'   By default, no permutation test is performed.
-#' @param use.sparse logical indicating whether to use sparse matrices when
-#'   computing HVP. N.B. Using sparse matrices may lead to slight increase
-#'  in run time. 
-#'
-#' @details Default S3 method is for class data frame or matrix with
-#'   dimensions (nfeatures, nsamples).
+#' Helper function that runs HVP with permutation tests
 #'
 #' @import Matrix
 #' @importFrom progress progress_bar
 #' @importFrom utils capture.output
 #'
-#' @examples
+#' @keywords internal
+#' @noRd
 #'
-#' X <- matrix(rnorm(1000), 50, 20)
-#' batch <- factor(rep(1:2, each = 10))
-#' class <- factor(rep(LETTERS[1:2], 10))
-#' 
-#' res <- HVP(X, batch, class)
-#'
-#' @rdname HVP
-#' @export
-#'
-HVP.default <- function(
-  x, batch, cls = NULL,
-  nperm = 0, use.sparse = FALSE,
-  ...
+.runHVP <- function(
+  x, batch, cls = NULL, nperm = 0, use.sparse = FALSE, ...
 ) {
   # Missing values
   if (any(is.na(x))) # is.na allocates memory
@@ -91,19 +105,62 @@ HVP.default <- function(
     for (i in seq_len(nperm)) {
       shuffled_batch <- sample(batch)
       if (!use.sparse) {
-        null_rvp <- .HVP(x, shuffled_batch, cls)$HVP
+        null_hvp <- .HVP(x, shuffled_batch, cls)@HVP
       } else {
-        null_rvp <- .HVP_sparseMatrix(x, shuffled_batch, cls)$HVP
+        null_hvp <- .HVP_sparseMatrix(x, shuffled_batch, cls)@HVP
       }
-      null_distr <- c(null_distr, null_rvp)
+      null_distr <- c(null_distr, null_hvp)
       pb$tick()
     }
-    res$p.value <- sum(null_distr > res$HVP) / nperm
-    res$null.distribution <- null_distr
+    res@p.value <- sum(null_distr > res@HVP) / nperm
+    res@null.distribution <- null_distr
   }
   res
 }
 
+
+#' @param batch vector, indicating the batch information of samples.
+#' @param cls vector or list of vectors with class information of samples.
+#' @param nperm numeric indicating number of permutations to simulate in the
+#'   Monte Carlo permutation test. We recommend a value no less than 1000.
+#'   By default, no permutation test is performed.
+#' @param use.sparse logical indicating whether to use sparse matrices when
+#'   computing HVP. N.B. Using sparse matrices may lead to slight increase
+#'  in run time. 
+#'
+#' @details S4 method for class data frame or matrix takes in array with
+#'   dimensions (nfeatures, nsamples).
+#'
+#' @examples
+#'
+#' X <- matrix(rnorm(1000), 50, 20)
+#' batch <- factor(rep(1:2, each = 10))
+#' class <- factor(rep(LETTERS[1:2], 10))
+#' 
+#' res <- HVP(X, batch, class)
+#'
+#' @rdname HVP
+#' @export
+#'
+setMethod("HVP", signature(x = "matrix"), .runHVP)
+
+
+#' @rdname HVP
+#' @export
+#'
+setMethod("HVP", signature(x = "Matrix"), .runHVP)
+  
+
+#' @rdname HVP
+#' @export
+#'
+setMethod(
+  "HVP", "data.frame",
+  function(x, ...) {
+    mat <- as.matrix(x)
+    HVP(mat, ...)
+  }
+)
 
 #' @param batchname character, name of column in metadata indicating batch.
 #' @param classname character, name of column/s in metadata indicating class. 
@@ -111,81 +168,83 @@ HVP.default <- function(
 #' @rdname HVP
 #' @export
 #'
-HVP.Seurat <- function(
-  x, batchname, classname = NULL,
-  nperm = 0, use.sparse = FALSE,
-  ...
-) {
-  # Suggests: SeuratObject
-  if (!requireNamespace("SeuratObject", quietly = TRUE))
-    stop("Please install SeuratObject package!")
+setMethod(
+  "HVP", "Seurat",
+  function(x, batchname, classname = NULL, nperm = 0, use.sparse = FALSE, ...) {
+    # Suggests: SeuratObject
+    if (!requireNamespace("SeuratObject", quietly = TRUE))
+      stop("Please install SeuratObject package!")
 
-  metadata <- x[[]]
-  stopifnot(batchname %in% colnames(metadata))
-  if (!is.null(classname))
-    stopifnot(all(classname %in% colnames(metadata)))
+    metadata <- x[[]]
+    stopifnot(batchname %in% colnames(metadata))
+    if (!is.null(classname))
+      stopifnot(all(classname %in% colnames(metadata)))
 
-  # GetAssayData is for Seurat assay v3/v4
-  assay_data <- SeuratObject::GetAssayData(x)
-  batch <- x@meta.data[[batchname]]
-  cls <- if (is.null(classname) || is.na(classname)) {
-    NULL
-  } else if (length(classname) == 1L) {
-    # x[[name]] returns dataframe instead of vector!
-    x@meta.data[[classname]]
-  } else {
-    lapply(classname, function(name) x@meta.data[[name]])
+    # GetAssayData is for Seurat assay v3/v4
+    assay_data <- SeuratObject::GetAssayData(x)
+    batch <- x@meta.data[[batchname]]
+    cls <- if (is.null(classname) || is.na(classname)) {
+      NULL
+    } else if (length(classname) == 1L) {
+      # x[[name]] returns dataframe instead of vector!
+      x@meta.data[[classname]]
+    } else {
+      lapply(classname, function(name) x@meta.data[[name]])
+    }
+    HVP(assay_data, batch, cls, nperm, use.sparse, ...)
   }
-  HVP.default(assay_data, batch, cls, nperm, use.sparse, ...)
-}
+)
 
 
 #' @param assayname character, name of assay to use. By default the first
 #'   assay is used.
 #'
-#' @details S3 method for `SummarizedExperiment` is applicable for the
+#' @details S4 method for `SummarizedExperiment` is applicable for the
 #'   `SingleExperiment` class as well, as it inherits from the
 #'   `SummarizedExperiment` class.
 #'
 #' @rdname HVP
 #' @export
 #'
-HVP.SummarizedExperiment <- function(
-  x, batchname, classname = NULL,
-  assayname = NULL,
-  nperm = 0, use.sparse = FALSE,
-  ...
-) {
-  # Suggests: SummarizedExperiment 
-  if (!requireNamespace("SummarizedExperiment", quietly = TRUE))
-    stop("Please install SummarizedExperiment package!")
+setMethod(
+  "HVP", "SummarizedExperiment",
+  function(
+    x, batchname, classname = NULL,
+    assayname = NULL,
+    nperm = 0, use.sparse = FALSE,
+    ...
+  ) {
+    # Suggests: SummarizedExperiment 
+    if (!requireNamespace("SummarizedExperiment", quietly = TRUE))
+      stop("Please install SummarizedExperiment package!")
 
-  metadata <- SummarizedExperiment::colData(x)
-  stopifnot(batchname %in% colnames(metadata))
-  if (!is.null(classname))
-    stopifnot(all(classname %in% colnames(metadata)))
+    metadata <- SummarizedExperiment::colData(x)
+    stopifnot(batchname %in% colnames(metadata))
+    if (!is.null(classname))
+      stopifnot(all(classname %in% colnames(metadata)))
 
-  assay_data <- if (is.null(assayname) || is.na(assayname)) {
-    SummarizedExperiment::assay(x)
-  } else {
-    SummarizedExperiment::assay(x, assayname)
+    assay_data <- if (is.null(assayname) || is.na(assayname)) {
+      SummarizedExperiment::assay(x)
+    } else {
+      SummarizedExperiment::assay(x, assayname)
+    }
+    batch <- x[[batchname]]
+    cls <- if (is.null(classname) || is.na(classname)) {
+      NULL
+    } else if (length(classname) == 1L) {
+      x[[classname]]
+    } else {
+      lapply(classname, function(name) x[[name]])
+    }
+    HVP(assay_data, batch, cls, nperm, use.sparse, ...)
   }
-  batch <- x[[batchname]]
-  cls <- if (is.null(classname) || is.na(classname)) {
-    NULL
-  } else if (length(classname) == 1L) {
-    x[[classname]]
-  } else {
-    lapply(classname, function(name) x[[name]])
-  }
-  HVP.default(assay_data, batch, cls, nperm, use.sparse, ...)
-}
+)
 
 
 #' Helper function that calculates HVP
 #'
 #' @param X data frame or matrix with dim (nfeatures, nsamples).
-#' @param batch vector, indicating the batch information of samples.
+#' @param batch vector indicating the batch information of samples.
 #' @param cls vector or list of vectors with class information of samples.
 #'
 #' @keywords internal
@@ -197,7 +256,7 @@ HVP.SummarizedExperiment <- function(
   if (length(unique(batch)) == 1L) {
     # Use NA as is.na works on lists
     message("Only one batch present!")
-    return(list(HVP = 0, sum.squares = NA)) # only one batch is present
+    return(new("hvp", HVP = 0, sum.squares = NA)) # only one batch is present
   }
 
   ### COMPUTE HVP ###
@@ -219,8 +278,7 @@ HVP.SummarizedExperiment <- function(
     SS <- cbind(ss_batch, ss_total)
     rownames(SS) <- feature_names 
     colnames(SS) <- c("ss_batch", "ss_total")
-
-    return(list(HVP = pct_batch, sum.squares = SS))
+    return(new("hvp", HVP = pct_batch, sum.squares = SS))
   } else {
     feature_names <- rownames(X)
     ss_total <- rowSums((X - rowMeans(X)) ^ 2)
@@ -233,7 +291,7 @@ HVP.SummarizedExperiment <- function(
         MoreArgs = list(cls = NULL),
         SIMPLIFY = FALSE
       ),
-      function(obj) obj$sum.squares
+      function(obj) obj@sum.squares
     )
     # Filters out obj$sum.squares == NA
     SS_classes <- SS_classes[!is.na(SS_classes)]
@@ -252,16 +310,15 @@ HVP.SummarizedExperiment <- function(
     SS <- cbind(ss_batch, ss_total)
     rownames(SS) <- feature_names
     colnames(SS) <- c("ss_batch", "ss_total")
-
-    return(list(HVP = pct_batch, sum.squares = SS))
+    return(new("hvp", HVP = pct_batch, sum.squares = SS))
   }
 }
 
 
-#' Helper function that calculates HVP using sparse matrices
+#' Helper function that calculates HVP for sparse matrices
 #'
 #' @param X data frame or matrix with dim (nfeatures, nsamples).
-#' @param batch vector, indicating the batch information of samples.
+#' @param batch vector indicating the batch information of samples.
 #' @param cls vector or list of vectors with class information of samples.
 #'
 #' @import Matrix
@@ -276,7 +333,7 @@ HVP.SummarizedExperiment <- function(
   if (length(unique(batch)) == 1L) {
     # Use NA as is.na works on lists
     message("Only one batch present!")
-    return(list(HVP = 0, sum.squares = NA)) # only one batch is present
+    return(new("hvp", HVP = 0, sum.squares = NA)) # only one batch is present
   }
   
   ### COMPUTE HVP ###
@@ -307,7 +364,7 @@ HVP.SummarizedExperiment <- function(
     )
     # print("HVP.sparseMatrix: vars")
     # print(sapply(ls(), function(x) object_size(mget(x, inherits = TRUE))))
-    return(list(HVP = pct_batch, sum.squares = SS))
+    return(new("hvp", HVP = pct_batch, sum.squares = SS))
   } else {
     feature_names <- rownames(X)
     ss_total <- rowSums(
@@ -323,7 +380,7 @@ HVP.SummarizedExperiment <- function(
         MoreArgs = list(cls = NULL),
         SIMPLIFY = FALSE
       ),
-      function(obj) obj$sum.squares
+      function(obj) obj@sum.squares
     )
     # Filters out obj$sum.squares == NA
     SS_classes <- SS_classes[!is.na(SS_classes)]
@@ -350,7 +407,6 @@ HVP.SummarizedExperiment <- function(
       dimnames = list(feature_names, c("ss_batch", "ss_total")),
       sparse = TRUE
     )
-
-    return(list(HVP = pct_batch, sum.squares = SS))
+    return(new("hvp", HVP = pct_batch, sum.squares = SS))
   }
 }

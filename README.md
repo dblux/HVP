@@ -37,15 +37,15 @@ batch <- simdata$metadata$batch    # vector representing batch
 class <- simdata$metadata$class    # vector representing class
 
 res <- HVP(X, batch, class)
-print(res$HVP)
+print(res@HVP)
 
 # To perform permutation test
 res <- HVP(X, batch, class, nperm = 1000)
-print(res$p.value)
+print(res@p.value)
 ```
 
-`HVP` is an S3 generic function; methods can be added for new
-classes. S3 methods for class: `matrix`, `data.frame`, `SummarizedExperiment`,
+`HVP` is an S4 generic function; methods can be added for new
+classes. S4 methods for class: `matrix`, `data.frame`, `SummarizedExperiment`,
 `SingleCellExperiment` and `Seurat` are provided.
 
 ``` r

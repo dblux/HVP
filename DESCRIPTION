@@ -8,8 +8,8 @@ Description: HVP is a quantitative batch effect metric that estimates the
     proportion of variance associated with batch effects in a data set.
 Imports: Matrix, methods, progress, stats, utils
 Suggests:
-    SingleCellExperiment, SummarizedExperiment, Seurat, SeuratObject,
-    testthat, splatter, scater, ggplot2, devtools, knitr, rmarkdown 
+    SingleCellExperiment, SummarizedExperiment, Seurat, SeuratObject, ggplot2,
+    testthat, splatter, scater, devtools, knitr, rmarkdown, ExperimentHub 
 License: MIT + file LICENSE
 VignetteBuilder: knitr
 Encoding: UTF-8

@@ -51,11 +51,11 @@ test_that("splitCols works when arg: f is a list of vectors", {
 HVP_TRUE <- 0.01011387
 test_that("HVP works on a dense matrix", {
   # test that arg: batch, cls can be of type {numeric, character, factor}
-  expect_equal(HVP(dense, batch, class1)$HVP, HVP_TRUE)
-  expect_equal(HVP(dense, as.factor(batch), class1)$HVP, HVP_TRUE)
-  expect_equal(HVP(dense, as.character(batch), class1)$HVP, HVP_TRUE)
-  expect_equal(HVP(dense, batch, as.factor(class1))$HVP, HVP_TRUE)
-  expect_equal(HVP(dense, batch, class1_int)$HVP, HVP_TRUE)
+  expect_equal(HVP(dense, batch, class1)@HVP, HVP_TRUE)
+  expect_equal(HVP(dense, as.factor(batch), class1)@HVP, HVP_TRUE)
+  expect_equal(HVP(dense, as.character(batch), class1)@HVP, HVP_TRUE)
+  expect_equal(HVP(dense, batch, as.factor(class1))@HVP, HVP_TRUE)
+  expect_equal(HVP(dense, batch, class1_int)@HVP, HVP_TRUE)
 })
 
 test_that("HVP works when arg: f is a list of vectors", {
@@ -70,19 +70,19 @@ test_that("HVP throws error when batch and class are completely confounded", {
 })
 
 test_that("HVP works on a sparse matrix", {
-  expect_equal(HVP(sparse, batch, class1)$HVP, HVP_TRUE)
+  expect_equal(HVP(sparse, batch, class1)@HVP, HVP_TRUE)
 })
 
 test_that("HVP works on a data frame", {
-  expect_equal(HVP(data, batch, class1)$HVP, HVP_TRUE)
+  expect_equal(HVP(data, batch, class1)@HVP, HVP_TRUE)
 })
 
 test_that("HVP works on a SingleCellExperiment object", {
-  expect_equal(HVP(sce, "batch", "class1")$HVP, HVP_TRUE)
+  expect_equal(HVP(sce, "batch", "class1")@HVP, HVP_TRUE)
 })
 
 test_that("HVP works on a Seurat object", {
-  expect_equal(HVP(seu, "batch", "class1")$HVP, HVP_TRUE)
+  expect_equal(HVP(seu, "batch", "class1")@HVP, HVP_TRUE)
 })
 
 PVALUE <- 0.404
@@ -90,10 +90,10 @@ cat("Running permutation test...", fill = TRUE)
 test_that("Permutation test returns p.value and null.distribution", {
   expect_no_error({
     obj <- HVP(dense, batch, class1, nperm = 1000)
-    expect_equal(obj$p.value, PVALUE)
+    expect_equal(obj@p.value, PVALUE)
   })
 })
 
 test_that("Helper HVP function that uses sparse matrices works", {
-  expect_equal(HVP(sparse, batch, class1, use.sparse = TRUE)$HVP, HVP_TRUE)
+  expect_equal(HVP(sparse, batch, class1, use.sparse = TRUE)@HVP, HVP_TRUE)
 })

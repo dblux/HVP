@@ -2,18 +2,24 @@
 % Please edit documentation in R/HVP.R
 \name{HVP}
 \alias{HVP}
-\alias{HVP.default}
-\alias{HVP.Seurat}
-\alias{HVP.SummarizedExperiment}
+\alias{HVP,matrix-method}
+\alias{HVP,Matrix-method}
+\alias{HVP,data.frame-method}
+\alias{HVP,Seurat-method}
+\alias{HVP,SummarizedExperiment-method}
 \title{Hierarchical variance partitioning (HVP)}
 \usage{
 HVP(x, ...)
 
-\method{HVP}{default}(x, batch, cls = NULL, nperm = 0, use.sparse = FALSE, ...)
+\S4method{HVP}{matrix}(x, batch, cls = NULL, nperm = 0, use.sparse = FALSE, ...)
 
-\method{HVP}{Seurat}(x, batchname, classname = NULL, nperm = 0, use.sparse = FALSE, ...)
+\S4method{HVP}{Matrix}(x, batch, cls = NULL, nperm = 0, use.sparse = FALSE, ...)
 
-\method{HVP}{SummarizedExperiment}(
+\S4method{HVP}{data.frame}(x, ...)
+
+\S4method{HVP}{Seurat}(x, batchname, classname = NULL, nperm = 0, use.sparse = FALSE, ...)
+
+\S4method{HVP}{SummarizedExperiment}(
   x,
   batchname,
   classname = NULL,
@@ -26,7 +32,7 @@ HVP(x, ...)
 \arguments{
 \item{x}{object to calculate HVP for.}
 
-\item{...}{additional arguments to pass to S3 methods.}
+\item{...}{additional arguments to pass to S4 methods.}
 
 \item{batch}{vector, indicating the batch information of samples.}
 
@@ -63,15 +69,15 @@ List containing the following components:
 in a data set (the "HVP" value of a data set). To determine whether batch
 effects are statistically significant in a data set, a permutation test can
 be performed by setting `nperm` to a number above 100. `HVP` is
-an S3 generic function; methods can be added for new classes. S3 methods
-for class: array-like objects (default), `SummarizedExperiment`, 
+an S4 generic function; methods can be added for new classes. S4 methods
+for class: array-like objects, `SummarizedExperiment`, 
 `SingleCellExperiment` and `Seurat` are provided.
 }
 \details{
-Default S3 method is for class data frame or matrix with
+S4 method for class data frame or matrix takes in array with
   dimensions (nfeatures, nsamples).
 
-S3 method for `SummarizedExperiment` is applicable for the
+S4 method for `SummarizedExperiment` is applicable for the
   `SingleExperiment` class as well, as it inherits from the
   `SummarizedExperiment` class.
 }
