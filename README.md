@@ -10,6 +10,16 @@ number of permutations. We recommend performing at least 1000 permutations.
 
 ## Installation
 
+### Install from Bioconductor (preferred)
+
+``` r
+# Install package: BiocManager if not present
+if (!require("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+
+BiocManager::install("HVP")
+```
+
 ### Install from Github
 
 ``` r
