@@ -1,10 +1,11 @@
-#' @include utils.R
-#'
+#' @import methods
 NULL
-#'
+
+#' @include utils.R
+NULL
+
 setClassUnion("numericOrNULL", c("numeric", "NULL"))
 
-#'
 #' HVP results class
 #'
 #' @description
@@ -70,8 +71,6 @@ setGeneric("HVP", function(x, ...) standardGeneric("HVP"))
 #' Helper function that runs HVP with permutation tests
 #'
 #' @import Matrix
-#' @importFrom progress progress_bar
-#' @importFrom utils capture.output
 #'
 #' @keywords internal
 #' @noRd
@@ -94,13 +93,16 @@ setGeneric("HVP", function(x, ...) standardGeneric("HVP"))
     # TODO: Multiprocessing for permtest
     if (nperm < 100)
       stop("nperm has to be above 100!")
-
-    pb <- progress_bar$new(
-      format = "Permutations: [:bar] :current/:total in :elapsed.",
-      total = nperm, clear = FALSE, width = 75
-    )
-    capture.output(pb$tick(0), file = nullfile())
-
+    has_progress <- requireNamespace("progress", quietly = TRUE)
+    if (has_progress) {
+      pb <- progress::progress_bar$new(
+        format = "Permutations: [:bar] :current/:total in :elapsed.",
+        total = nperm, clear = FALSE, width = 75
+      )
+      utils::capture.output(pb$tick(0), file = nullfile())
+    } else {
+      message("Install 'progress' package for progress bar")
+    }
     null_distr <- numeric()
     for (i in seq_len(nperm)) {
       shuffled_batch <- sample(batch)
@@ -110,7 +112,12 @@ setGeneric("HVP", function(x, ...) standardGeneric("HVP"))
         null_hvp <- .HVP_sparseMatrix(x, shuffled_batch, cls)@HVP
       }
       null_distr <- c(null_distr, null_hvp)
-      pb$tick()
+      if (has_progress) {
+        pb$tick()
+      } else {
+        if (i %% 100 == 0)
+          message(sprintf("Permutation %d/%d", i, nperm))
+      }
     }
     res@p.value <- sum(null_distr > res@HVP) / nperm
     res@null.distribution <- null_distr
@@ -173,7 +180,7 @@ setMethod(
   function(x, batchname, classname = NULL, nperm = 0, use.sparse = FALSE, ...) {
     # Suggests: SeuratObject
     if (!requireNamespace("SeuratObject", quietly = TRUE))
-      stop("Please install SeuratObject package!")
+      stop("Install 'SeuratObject' package")
 
     metadata <- x[[]]
     stopifnot(batchname %in% colnames(metadata))
@@ -216,7 +223,7 @@ setMethod(
   ) {
     # Suggests: SummarizedExperiment 
     if (!requireNamespace("SummarizedExperiment", quietly = TRUE))
-      stop("Please install SummarizedExperiment package!")
+      stop("Install 'SummarizedExperiment' package")
 
     metadata <- SummarizedExperiment::colData(x)
     stopifnot(batchname %in% colnames(metadata))
