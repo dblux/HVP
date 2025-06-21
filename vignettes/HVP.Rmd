@@ -148,10 +148,13 @@ Similarly, `HVP` can be used to quantify batch effects in `Seurat` objects by pr
 * `clsname`: name of the column/s in metadata indicating class information of samples.
 
 ```{r seurat, message = FALSE}
-library(Seurat)
-
-seurat_data <- as.Seurat(sce_data)
-res_seurat <- HVP(seurat_data, "Batch", "Group")
+if (requireNamespace("Seurat", quietly = TRUE)) {
+  library(Seurat)
+  seurat_data <- as.Seurat(sce_data)
+  res_seurat <- HVP(seurat_data, "Batch", "Group")
+} else {
+  message("Please install the 'Seurat' package to run this example.")
+}
 ```
 
 # Testing the statistical significance of batch effects
